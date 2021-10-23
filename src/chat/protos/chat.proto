@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package =".;protos";
+
+message Login{
+  string id = 1;
+  string name = 2;
+};
+message LoginResponse{
+  int32 err = 1;
+}
+
+message Logout{
+  string id = 1;
+}
+message LogoutResponse{
+  int32 err = 1;
+}

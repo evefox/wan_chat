@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"bytes"
+	"chat/gen_server"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -10,6 +11,12 @@ import (
 )
 
 const singleMsgSaveLen = 2
+
+type Gateway struct {
+	roleID     int
+	roleServer chan gen_server.GenServerMsg
+	conn       *net.TCPConn
+}
 
 // 网关实例
 func gatewayInit(conn *net.TCPConn) {
@@ -31,11 +38,13 @@ func gatewayInit(conn *net.TCPConn) {
 
 	go loopReceive(conn, readerChannel)
 
+	gwPrt := new(Gateway)
+	gwPrt.conn = conn
 	for {
 		select {
 		case data := <-readerChannel:
 			msgData := data[4:]
-			err := MsgRoute(int32(bytesToInt(data[:4])), msgData)
+			err := MsgRoute(gwPrt, int32(bytesToInt(data[:4])), msgData)
 			if err != nil {
 				return
 			}
@@ -138,4 +147,9 @@ func sendClient(msg proto.Message, conn *net.TCPConn) error {
 	}
 
 	return errors.New("not found msgID")
+}
+
+func (g *Gateway) SetRole(id int, server chan gen_server.GenServerMsg) {
+	g.roleID = id
+	g.roleServer = server
 }

@@ -6,7 +6,7 @@ import (
 	"reflect"
 )
 
-type MessageHandler func(msgID int32, msg interface{})
+type MessageHandler func(gwPrt *Gateway, msgID int32, msg interface{})
 
 type MessageInfo struct {
 	msgType    reflect.Type
@@ -30,14 +30,14 @@ func RegisterMessageResponse(msgName string, msgID int32) {
 	msgResponseMap[msgName] = msgID
 }
 
-func MsgRoute(msgID int32, data []byte) error {
+func MsgRoute(gwPrt *Gateway, msgID int32, data []byte) error {
 	if info, ok := msgMap[msgID]; ok {
 		msg := reflect.New(info.msgType.Elem()).Interface()
 		err := proto.Unmarshal(data, msg.(proto.Message))
 		if err != nil {
 			return err
 		}
-		info.msgHandler(msgID, msg)
+		info.msgHandler(gwPrt, msgID, msg)
 		return err
 	}
 	return errors.New("not found msgID")

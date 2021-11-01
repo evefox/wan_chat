@@ -9,6 +9,8 @@ const (
 	LoginResponse
 	Logout
 	LogoutResponse
+	Chat
+	ChatResponse
 )
 
 func RegisterMsg() {
@@ -17,4 +19,6 @@ func RegisterMsg() {
 	RegisterMessageResponse("LoginResponse", LoginResponse)
 	RegisterMessage(Logout, &pb.Logout{}, HandlerLogout)
 	RegisterMessageResponse("LogoutResponse", LogoutResponse)
+	RegisterMessage(Chat, &pb.Chat{}, HandlerChat)
+	RegisterMessageResponse("ChatResponse", ChatResponse)
 }

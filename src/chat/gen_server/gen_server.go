@@ -4,6 +4,7 @@ import "fmt"
 
 const (
 	call = iota
+	send
 )
 
 const (
@@ -47,7 +48,7 @@ func Call(caller chan GenServerMsg, msg interface{}) (result int, reply interfac
 }
 
 func Send(caller chan GenServerMsg, msg interface{}) {
-	caller <- GenServerMsg{msgType: call, msg: msg, replyChan: nil}
+	caller <- GenServerMsg{msgType: send, msg: msg, replyChan: nil}
 }
 
 func Start(mod GenServerMod, recv chan GenServerMsg, args interface{}) {

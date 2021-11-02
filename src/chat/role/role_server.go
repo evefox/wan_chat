@@ -3,6 +3,7 @@ package role
 import (
 	"chat/gen_server"
 	"fmt"
+	"reflect"
 )
 
 type Role struct {
@@ -27,7 +28,7 @@ func (r Role) DoHandleCall(msg interface{}) (result gen_server.GenCallResult) {
 }
 
 func (r Role) DoHandleInfo(msg interface{}) (ok bool) {
-	fmt.Printf("%d receive msg:%v\n", r.RoleID, msg)
+	fmt.Println("receive msg:", r.RoleID, ",", msg, ",", reflect.TypeOf(msg))
 	return true
 }
 

@@ -1,7 +1,7 @@
 package gateway
 
 import (
-	pb "chat/protos"
+	pb "github.com/evefox/chat/protos"
 )
 
 const (

@@ -1,11 +1,10 @@
 package gateway
 
 import (
-	"bytes"
 	"chat/gen_server"
-	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/evefox/chat/tool"
 	"github.com/golang/protobuf/proto"
 	"net"
 )
@@ -43,8 +42,13 @@ func gatewayInit(conn *net.TCPConn) {
 	for {
 		select {
 		case data := <-readerChannel:
-			msgData := data[4:]
-			err := MsgRoute(gwPrt, int32(bytesToInt(data[:4])), msgData)
+			fmt.Printf("aaa: %v\n", data)
+			msgData := data[2:]
+			msgID, err := tool.BytesToInt(data[:2])
+			if err != nil {
+				return
+			}
+			err = MsgRoute(gwPrt, int32(msgID), msgData)
 			if err != nil {
 				return
 			}
@@ -79,50 +83,29 @@ func loopReceive(conn *net.TCPConn, readerChannel chan []byte) {
 func unpack(buffer []byte, readerChannel chan []byte) []byte {
 	length := len(buffer)
 
+	fmt.Printf("ccc: %v %v\n", length, buffer)
+
 	var i int
 	for i = 0; i < length; i = i + 1 {
 		if length < i+singleMsgSaveLen {
 			break
 		}
-		messageLength := bytesToInt(buffer[i : i+singleMsgSaveLen])
-		if length < i+singleMsgSaveLen+messageLength {
+		messageLength, _ := tool.BytesToInt(buffer[i : i+singleMsgSaveLen])
+		fmt.Printf("messageLength: %v\n", messageLength)
+		if length < i+messageLength {
 			break
 		}
-		data := buffer[i+singleMsgSaveLen : i+singleMsgSaveLen+messageLength]
+		data := buffer[i+singleMsgSaveLen : i+messageLength]
+		fmt.Printf("bbb: %v~%v:%v\n", i+singleMsgSaveLen, i+messageLength, data)
 		readerChannel <- data
 
-		i += singleMsgSaveLen + messageLength - 1
+		i += messageLength - 1
 	}
 
 	if i == length {
 		return make([]byte, 0)
 	}
 	return buffer[i:]
-}
-
-// 整形转换成字节
-func intToBytes(n int) []byte {
-	x := int32(n)
-
-	bytesBuffer := bytes.NewBuffer([]byte{})
-	err := binary.Write(bytesBuffer, binary.BigEndian, x)
-	if err != nil {
-		return nil
-	}
-	return bytesBuffer.Bytes()
-}
-
-// 字节转换成整形
-func bytesToInt(b []byte) int {
-	bytesBuffer := bytes.NewBuffer(b)
-
-	var x int32
-	err := binary.Read(bytesBuffer, binary.BigEndian, &x)
-	if err != nil {
-		return 0
-	}
-
-	return int(x)
 }
 
 // 发送消息到客户端
@@ -136,8 +119,8 @@ func sendClient(msg proto.Message, conn *net.TCPConn) error {
 	msgName := reflect.Descriptor().FullName()
 	if msgID, ok := msgResponseMap[string(msgName)]; ok {
 		length := len(msgBin)
-		msgIDBin := intToBytes(int(msgID))
-		tmpBuffer := append(intToBytes(length), msgIDBin[:]...)
+		msgIDBin := tool.IntToBytes(int(msgID), tool.IntTypeInt16)
+		tmpBuffer := append(tool.IntToBytes(length+4, tool.IntTypeInt16), msgIDBin[:]...)
 		scBin := append(tmpBuffer, msgBin[:]...)
 		_, err := conn.Write(scBin)
 		if err != nil {
